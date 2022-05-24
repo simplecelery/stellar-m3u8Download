@@ -179,19 +179,19 @@ class hlsDownloader:
                 self.key = pyaes.AESModeOfOperationCBC(bytes(self.keyText, encoding='utf8'))
         
     def parserUrl(self):
-        hlsInfo,host = self.parserM3u8(self.m3u8Url)
-        self.TsInfo = self.getTsInfo(hlsInfo,host)
-        self.key = self.loadKey(hlsInfo,host)
+        hlsInfo,host,rootpath = self.parserM3u8(self.m3u8Url)
+        self.TsInfo = self.getTsInfo(hlsInfo,host,rootpath)
+        self.key = self.loadKey(hlsInfo,host,rootpath)
 
     def parserM3u8(self,hlsurl):
         tryCount = self.tryCount
-        rootUrlPath = None
+        rootUrlPath = hlsurl[0:hlsurl.rindex('/')] + '/'
         x = urlparse(hlsurl)
         host = x.scheme + '://' + x.hostname
         while True:
             if tryCount < 0:
                 print("\t{0}下载失败！".format(hlsurl))
-                return None,host
+                return None,host,rootUrlPath
             tryCount = tryCount - 1
             try:
                 response = requests.get(hlsurl,  timeout=20,verify=False)
@@ -211,14 +211,17 @@ class hlsDownloader:
                     if rowData.find('://') >= 0:
                         hlsurl = rowData
                     else:
-                        hlsurl = host + rowData
+                        if rowData[0] == '/':
+                            hlsurl = host + rowData
+                        else:
+                            hlsurl = rootUrlPath +rowData
                     return self.parserM3u8(hlsurl)
             print("\t{0}响应未寻找到m3u8！".format(response.text))
-            return None,host
+            return None,host,rootUrlPath
         else:
-            return m3u8Info,host
+            return m3u8Info,host,rootUrlPath
             
-    def getTsInfo(self,m3u8Info,host):
+    def getTsInfo(self,m3u8Info,host,rootpath):
         fileList = []
         allduration = 0
         if m3u8Info == None:
@@ -227,7 +230,10 @@ class hlsDownloader:
         for ts in m3u8Info.segments:
             tsurl = ts.uri
             if tsurl.find('://') < 0:
-                tsurl = host + tsurl
+                if tsurl[0] =='/':
+                    tsurl = host + tsurl
+                else:
+                    tsurl = rootpath + tsurl
             allduration = allduration + ts.duration
             fileList.append({'index':index,'duration':ts.duration,'url':tsurl,'downstate':0})
             index = index + 1
@@ -261,29 +267,37 @@ class hlsDownloader:
         return None
         
 
-    def loadKey(self,m3u8Info,host):
-        if (len(m3u8Info.keys) != 0) and (m3u8Info.keys[0] is not None):
-            # 默认选择第一个key，且AES-128算法
-            key = m3u8Info.keys[0]
-            if key.method != "AES-128":
-                print("\t{0}不支持的解密方式！".format(key.method))
-                return None
-            # 如果key的url是相对路径，加上m3u8Url的路径
-            keyUrl = key.uri
-            if not keyUrl.startswith("http"):
+    def loadKey(self,m3u8Info,host,rootpath):
+        if m3u8Info.keys == None:
+            return None
+        if len(m3u8Info.keys) == 0:
+            return None
+        if m3u8Info.keys[0] == None:
+            return None
+
+        # 默认选择第一个key，且AES-128算法
+        key = m3u8Info.keys[0]
+        if key.method != "AES-128":
+            print("\t{0}不支持的解密方式！".format(key.method))
+            return None
+        # 如果key的url是相对路径，加上m3u8Url的路径
+        keyUrl = key.uri
+        if not keyUrl.startswith("http"):
+            if keyUrl[0] == '/':
                 keyUrl = host + keyUrl
-            print("\t2、开始下载key...")
-            self.keyText = self.getKey(keyUrl)
-            self.keyVI = key.iv
-            if self.keyText is None:
-                return None
-            print(self.keyText)
-            # 判断是否有偏移量
-            if key.iv is not None:
-                cryptor = pyaes.AESModeOfOperationCBC(bytes(self.keyText, encoding='utf8'), bytes(key.iv, encoding='utf8'))
-                #AES.new(bytes(keyText, encoding='utf8'), AES.MODE_CBC, bytes(key.iv, encoding='utf8'))
             else:
-                cryptor = pyaes.AESModeOfOperationCBC(bytes(self.keyText, encoding='utf8'))
-                #AES.new(bytes(keyText, encoding='utf8'), AES.MODE_CBC, bytes(keyText, encoding='utf8'))
-            return cryptor
-        return None
+                keyUrl = rootpath + keyUrl
+        print("\t2、开始下载key...")
+        self.keyText = self.getKey(keyUrl)
+        self.keyVI = key.iv
+        if self.keyText is None:
+            return None
+        print(self.keyText)
+        # 判断是否有偏移量
+        if key.iv is not None:
+            cryptor = pyaes.AESModeOfOperationCBC(bytes(self.keyText, encoding='utf8'), bytes(key.iv, encoding='utf8'))
+            #AES.new(bytes(keyText, encoding='utf8'), AES.MODE_CBC, bytes(key.iv, encoding='utf8'))
+        else:
+            cryptor = pyaes.AESModeOfOperationCBC(bytes(self.keyText, encoding='utf8'))
+            #AES.new(bytes(keyText, encoding='utf8'), AES.MODE_CBC, bytes(keyText, encoding='utf8'))
+        return cryptor
