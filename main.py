@@ -112,7 +112,15 @@ class m3u8Downloadplugin(StellarPlayer.IStellarPlayerPlugin):
             {'type':'space','height':5},
             {'type':'list','name':'hlsgrid','itemlayout':hlsgrid_layout,'value':self.hlslist,'separator':True,'itemheight':40},
             {'type':'space','height':5},
-            {'type':'button','name':'新增下载','@click':'onAddDownload','width':200,'height':30},
+            {
+                'group':[
+                    {'type':'button','name':'新增下载','@click':'onAddDownload'},
+                    {'type':'space','width':5},
+                    {'type':'button','name':'打开下载目录','@click':'onOpenDir'},
+                    {'type':'space','width':0.7},
+                ],
+                'height':30
+            },
             {'type':'space','height':5}
         ]
         return controls
@@ -134,11 +142,14 @@ class m3u8Downloadplugin(StellarPlayer.IStellarPlayerPlugin):
     
     def onDelClick(self, page, listControl, item, itemControl):
         hlsdown = self.downlist[item]
-        tsfile = hlsdown.savePath
-        jsonfile = self.savepath + hlsdown.medianame + '.json'
+        tsfile = hlsdown.medianame + '.ts'
+        jsonfile = hlsdown.medianame + '.json'
+        print(tsfile)
+        print(jsonfile)
         hlsdown.stop()
         self.downlist.remove(hlsdown)
         self.reflashDownInfo()
+        del hlsdown
         self.player.updateControlValue('main', 'hlsgrid', self.hlslist)
         os.remove(tsfile)
         os.remove(jsonfile)
@@ -167,6 +178,9 @@ class m3u8Downloadplugin(StellarPlayer.IStellarPlayerPlugin):
             }
         ]
         self.doModal('addhls',600,140,'',controls)
+        
+    def onOpenDir(self,*args):
+        os.startfile(self.savepath)
         
     def onAddHlsDown(self,*args):
         name = self.player.getControlValue('addhls', 'downname')

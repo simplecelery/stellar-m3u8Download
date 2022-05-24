@@ -40,12 +40,10 @@ class hlsDownloader:
     def stop(self):
         self.stopdown = True
         self.taskQue.join()
+        print('hls down stop')
         
     def setmedianame(self,name):
         self.medianame = name
-        
-    def delfile(self):
-        jsonfile = self.medianame + '.json'
         
     def putQueue(self,tasklist):
         cancled = False
@@ -58,7 +56,6 @@ class hlsDownloader:
                 break;
         if self.fout:
             self.fout.close()
-        self.saveInfoToJson()
         if cancled:
             print('down cancle')
             self.downstate = -1
@@ -83,6 +80,7 @@ class hlsDownloader:
             self.downedsuccess = '%.2f%%' % ((n / m) * 100)
             #self.saveInfoToJson()
             self.taskQue.task_done()
+        self.saveInfoToJson()
         
     def openM3u8Url(self,url):
         self.m3u8Url = url
@@ -159,6 +157,8 @@ class hlsDownloader:
         jsonfile = self.medianame + '.json'
         with open(jsonfile, 'w') as fp:
             json.dump(jsondata, fp)
+            print('saveInfoToJson')
+            fp.close()
     
     def loadInfoFromJson(self,file):
         file = open(file, "rb")
