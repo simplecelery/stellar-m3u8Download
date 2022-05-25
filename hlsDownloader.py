@@ -11,7 +11,6 @@ import queue
 from urllib.parse import urlparse
 
 
-
 def bytesToHexString(data):
     temp = []
     for i in data:
@@ -114,7 +113,7 @@ class hlsDownloader:
                 break
             tryCount = tryCount - 1
             try:
-                response = requests.get(tsurl, timeout=20, stream=True)
+                response = requests.get(tsurl, timeout=20, stream=True, verify=False)
                 if response.status_code == 200:
                     data = response.content
                     state = 1
@@ -173,10 +172,11 @@ class hlsDownloader:
             self.keyVI = jsondata['keyvi']
             self.downpercent = jsondata['downpercent']
             self.downedsuccess = jsondata['downedsuccess']
-            if self.keyVI != None:
-                self.key = pyaes.AESModeOfOperationCBC(bytes(self.keyText, encoding='utf8'), bytes(key.iv, encoding='utf8'))
-            else:
-                self.key = pyaes.AESModeOfOperationCBC(bytes(self.keyText, encoding='utf8'))
+            if self.keyText != None:
+                if self.keyVI != None:
+                    self.key = pyaes.AESModeOfOperationCBC(bytes(self.keyText, encoding='utf8'), bytes(key.iv, encoding='utf8'))
+                else:
+                    self.key = pyaes.AESModeOfOperationCBC(bytes(self.keyText, encoding='utf8'))
         
     def parserUrl(self):
         hlsInfo,host,rootpath = self.parserM3u8(self.m3u8Url)
@@ -194,7 +194,7 @@ class hlsDownloader:
                 return None,host,rootUrlPath
             tryCount = tryCount - 1
             try:
-                response = requests.get(hlsurl,  timeout=20,verify=False)
+                response = requests.get(hlsurl, timeout=20,verify=False)
                 if response.status_code == 301:
                     nowM3u8Url = response.headers["location"]
                     print("\t{0}重定向至{1}！".format(hlsurl, nowM3u8Url))
@@ -214,7 +214,7 @@ class hlsDownloader:
                         if rowData[0] == '/':
                             hlsurl = host + rowData
                         else:
-                            hlsurl = rootUrlPath +rowData
+                            hlsurl = rootUrlPath + rowData
                     return self.parserM3u8(hlsurl)
             print("\t{0}响应未寻找到m3u8！".format(response.text))
             return None,host,rootUrlPath
@@ -230,7 +230,7 @@ class hlsDownloader:
         for ts in m3u8Info.segments:
             tsurl = ts.uri
             if tsurl.find('://') < 0:
-                if tsurl[0] =='/':
+                if tsurl[0] == '/':
                     tsurl = host + tsurl
                 else:
                     tsurl = rootpath + tsurl
@@ -248,7 +248,7 @@ class hlsDownloader:
                 return None
             tryCount = tryCount - 1
             try:
-                response = requests.get(keyUrl, timeout=20, allow_redirects=True)
+                response = requests.get(keyUrl, timeout=20, allow_redirects=True, verify=False)
                 print(response.text)
                 if response.status_code == 301:
                     nowKeyUrl = response.headers["location"]

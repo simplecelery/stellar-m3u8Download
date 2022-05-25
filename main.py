@@ -43,6 +43,8 @@ class m3u8Downloadplugin(StellarPlayer.IStellarPlayerPlugin):
     
     def start(self):
         super().start()
+        print('----------')
+        print(self.savepath)
         for root, dirs, files in os.walk(self.savepath): 
             for file in files:
                 filenames = os.path.splitext(file)
