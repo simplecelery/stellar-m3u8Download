@@ -150,11 +150,11 @@ class m3u8Downloadplugin(StellarPlayer.IStellarPlayerPlugin):
     
     def onDelClick(self, page, listControl, item, itemControl):
         hlsdown = self.downlist[item]
+        if hlsdown.downstate == 1:
+            self.player.toast('main', '请先取消下载')
+            return
         tsfile = hlsdown.medianame + '.ts'
         jsonfile = hlsdown.medianame + '.json'
-        print(tsfile)
-        print(jsonfile)
-        hlsdown.stop()
         self.downlist.remove(hlsdown)
         self.reflashDownInfo()
         del hlsdown
