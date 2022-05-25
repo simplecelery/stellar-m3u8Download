@@ -1,5 +1,5 @@
 name=m3u8下载器
 description = 在线hls流下载合并
-version=1.02
+version=1.03
 url=https://github.com/simplecelery/stellar-m3u8Download
 type=在线播放

@@ -20,6 +20,7 @@ class m3u8Downloadplugin(StellarPlayer.IStellarPlayerPlugin):
         self.hlslist = []
         for item in self.downlist:
             xzzt = ''
+            percent = item.downpercent
             if item.downstate == 0:
                 xzzt = '未开始'
             if item.downstate == -1:
@@ -28,7 +29,10 @@ class m3u8Downloadplugin(StellarPlayer.IStellarPlayerPlugin):
                 xzzt = '下载中'
             if item.downstate == 2:
                 xzzt = '已下载'
-            newinfo = {'hlsname':item.medianame,'hlsdowned':item.downpercent,'successed':item.downedsuccess,'hlsstates':xzzt,'delete':'删除','play':'播放'}
+                percent = '100%'
+            if item.stopdown and item.downstate != -1:
+                xzzt = '暂停中'
+            newinfo = {'hlsname':item.medianame,'hlsdowned':percent,'successed':item.downedsuccess,'hlsstates':xzzt,'delete':'删除','play':'播放'}
             self.hlslist.append(newinfo)
         
     def timer(self):
@@ -128,7 +132,9 @@ class m3u8Downloadplugin(StellarPlayer.IStellarPlayerPlugin):
         return controls
     
     def onStateClick(self, page, listControl, item, itemControl):
+        print(item)
         hlsdown = self.downlist[item]
+        print(hlsdown.medianame)
         print(hlsdown.downstate)
         if hlsdown.downstate == 0:
             hlsdown.downToFile(hlsdown.savePath)

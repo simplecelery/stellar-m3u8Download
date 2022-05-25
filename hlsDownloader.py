@@ -38,7 +38,7 @@ class hlsDownloader:
         
     def stop(self):
         self.stopdown = True
-        self.taskQue.join()
+        #self.taskQue.join()
         print('hls down stop')
         
     def setmedianame(self,name):
@@ -60,30 +60,28 @@ class hlsDownloader:
             print('down end')
             self.downstate = 2
             self.downpercent = '100%'
-            self.taskQue.join()
-        print(self.downstate)
+        self.taskQue.join()
+        print('putQueue end ' + str(self.downstate))
         
     def getQueue(self,tasklen):
         n = 0
         m = 0
-        while self.taskQue.empty() != True:
+        while self.downstate == 1:
             task = self.taskQue.get()
             if task == None:
                 self.taskQue.task_done()
-                continue;
+                break;
             downres = self.downTsFile(task)
             self.downpercent = '%.2f%%' % ((task['index'] / tasklen) * 100)
             if downres == 1:
                 n = n + 1
             m = m + 1
             self.downedsuccess = '%.2f%%' % ((n / m) * 100)
-            self.saveInfoToJson()
+            #self.saveInfoToJson()
             self.taskQue.task_done()
-        if self.downstate == 2:
-            self.downpercent = '100%'
         if self.fout:
             self.fout.close()
-        #self.saveInfoToJson()
+        self.saveInfoToJson()
         print('getQueue end')
         
     def openM3u8Url(self,url):
@@ -193,6 +191,8 @@ class hlsDownloader:
         rootUrlPath = hlsurl[0:hlsurl.rindex('/')] + '/'
         x = urlparse(hlsurl)
         host = x.scheme + '://' + x.hostname
+        if x.port:
+            host = host + ':' + str(x.port)
         while True:
             if tryCount < 0:
                 print("\t{0}下载失败！".format(hlsurl))
@@ -220,6 +220,7 @@ class hlsDownloader:
                             hlsurl = host + rowData
                         else:
                             hlsurl = rootUrlPath + rowData
+                    print(hlsurl)
                     return self.parserM3u8(hlsurl)
             print("\t{0}响应未寻找到m3u8！".format(response.text))
             return None,host,rootUrlPath
