@@ -208,7 +208,9 @@ class m3u8Downloadplugin(StellarPlayer.IStellarPlayerPlugin):
             if item.medianame == name:
                 self.player.toast('addhls', '下载名称已存在')
                 return
+        self.loading()
         self.newdown(name,downurl)
+        self.loading(True)
         self.player.closeModal('addhls',True)
     
     def onGetActHlsAdd(self,*args):
@@ -220,6 +222,10 @@ class m3u8Downloadplugin(StellarPlayer.IStellarPlayerPlugin):
             self.player.toast('addhls', '当前视频非m3u8地址')
             return
         self.player.updateControlValue('addhls', 'hlsurl', playerhls)
+    
+    def loading(self, stopLoading = False):
+        if hasattr(self.player,'loadingAnimation'):
+            self.player.loadingAnimation('main', stop=stopLoading)
     
 def newPlugin(player:StellarPlayer.IStellarPlayer,*arg):
     plugin = m3u8Downloadplugin(player)
