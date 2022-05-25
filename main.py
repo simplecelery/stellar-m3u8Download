@@ -195,7 +195,7 @@ class m3u8Downloadplugin(StellarPlayer.IStellarPlayerPlugin):
         if downurl == '':
             self.player.toast('addhls', 'm3u8地址不能为空')
             return
-        if downurl.find('.m3u8') < 0 and downurl.find('http') < 0:
+        if downurl.find('.m3u8') < 0 or downurl.find('http') < 0:
             self.player.toast('addhls', '视频地址非m3u8地址')
             return
         for item in self.downlist:

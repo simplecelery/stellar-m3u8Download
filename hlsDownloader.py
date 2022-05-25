@@ -53,33 +53,38 @@ class hlsDownloader:
                 self.taskQue.put(None)
                 cancled = True
                 break;
-        if self.fout:
-            self.fout.close()
         if cancled:
             print('down cancle')
             self.downstate = -1
         else:
             print('down end')
             self.downstate = 2
+            self.downpercent = '100%'
             self.taskQue.join()
+        print(self.downstate)
         
     def getQueue(self,tasklen):
         n = 0
         m = 0
-        for i in range(tasklen):
+        while self.taskQue.empty() != True:
             task = self.taskQue.get()
             if task == None:
                 self.taskQue.task_done()
-                break;
+                continue;
             downres = self.downTsFile(task)
             self.downpercent = '%.2f%%' % ((task['index'] / tasklen) * 100)
             if downres == 1:
                 n = n + 1
             m = m + 1
             self.downedsuccess = '%.2f%%' % ((n / m) * 100)
-            #self.saveInfoToJson()
+            self.saveInfoToJson()
             self.taskQue.task_done()
-        self.saveInfoToJson()
+        if self.downstate == 2:
+            self.downpercent = '100%'
+        if self.fout:
+            self.fout.close()
+        #self.saveInfoToJson()
+        print('getQueue end')
         
     def openM3u8Url(self,url):
         self.m3u8Url = url
