@@ -158,7 +158,7 @@ class hlsDownloader:
         jsondata['name'] = self.medianame
         jsonfile = self.medianame + '.json'
         with open(jsonfile, 'w') as fp:
-            json.dump(jsondata, fp)
+            json.dump(jsondata, fp, indent=4, sort_keys=True, ensure_ascii=False)
             print('saveInfoToJson')
             fp.close()
     
